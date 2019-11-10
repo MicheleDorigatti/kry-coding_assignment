@@ -41,6 +41,16 @@ public class MainVerticle extends AbstractVerticle {
         });
   }
 
+  public void deleteService(String url)  {
+    if (! services.containsKey(url)) {
+      System.out.println("key not found");
+      return;
+    }
+
+    services.remove(url);
+    connector.query("DELETE FROM TABLE Services WHERE Name = '" +  url + "';");
+  }
+
   private void setRoutes(Router router){
     router.route("/*").handler(StaticHandler.create());
     router.get("/service").handler(req -> {
@@ -67,9 +77,10 @@ public class MainVerticle extends AbstractVerticle {
 
   private DBConnector setupDB() {
     connector = new DBConnector(vertx);
+    //connector.query("DROP TABLE Services;");
     connector.query("CREATE TABLE IF NOT EXISTS Services (Name VARCHAR(255), Status CHAR(10));");
-    connector.query("REPLACE INTO Services VALUES ('https://www.kry.se', 'UNKNOWN');");
-    connector.query("REPLACE INTO Services VALUES ('http://a.non.existing.url', 'UNKNOWN');");
+    //connector.query("INSERT INTO Services VALUES ('https://www.kry.se', 'UNKNOWN');");
+    //connector.query("INSERT INTO Services VALUES ('http://a.non.existing.url', 'UNKNOWN');");
 
     return connector;
   }
@@ -80,6 +91,8 @@ public class MainVerticle extends AbstractVerticle {
     result.setHandler(asyncResult -> {
       if (asyncResult.succeeded()) {
         for (JsonObject row : asyncResult.result().getRows()) {
+          System.out.println(row.getString("Name"));
+          System.out.println(row.getString("Status"));
           services.put(row.getString("Name"), row.getString("Status"));
         }
 

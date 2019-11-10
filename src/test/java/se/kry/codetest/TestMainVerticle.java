@@ -18,10 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(VertxExtension.class)
 public class TestMainVerticle {
+    private MainVerticle verticle;
 
   @BeforeEach
   void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
-    vertx.deployVerticle(new MainVerticle(), testContext.succeeding(id -> testContext.completeNow()));
+      verticle = new MainVerticle();
+    vertx.deployVerticle(verticle, testContext.succeeding(id -> testContext.completeNow()));
   }
 
   @Test
@@ -33,6 +35,9 @@ public class TestMainVerticle {
       } catch (InterruptedException e) {
           e.printStackTrace();
       }
+
+      //verticle.deleteService("https://www.kry.se");
+
       WebClient.create(vertx)
         .get(8080, "::1", "/service")
         .send(response -> testContext.verify(() -> {
