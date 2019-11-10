@@ -29,7 +29,7 @@ public class TestMainVerticle {
   @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
   void start_http_server(Vertx vertx, VertxTestContext testContext) {
       try {
-          TimeUnit.SECONDS.sleep(10);
+          TimeUnit.SECONDS.sleep(2);
       } catch (InterruptedException e) {
           e.printStackTrace();
       }
