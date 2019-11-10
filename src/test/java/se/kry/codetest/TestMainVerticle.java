@@ -65,7 +65,7 @@ public class TestMainVerticle {
         WebClient.create(vertx)
                 .delete(8080, "::1", "/service")
                 .sendJsonObject(json, response -> testContext.verify(() -> {
-                    assertEquals(200, response.result().statusCode());
+                    assertEquals(204, response.result().statusCode());
                     testContext.completeNow();
                 }));
 
@@ -94,8 +94,8 @@ public class TestMainVerticle {
 
         // A new service
         JsonObject json =  new JsonObject()
-                .put("name", "Facebook")
-                .put("url", "https://www.facebook.com");
+                .put("name", "kry")
+                .put("url", "https://www.kry.se");
 
         WebClient.create(vertx)
                 .post(8080, "::1", "/service")

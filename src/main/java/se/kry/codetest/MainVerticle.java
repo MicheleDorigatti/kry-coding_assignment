@@ -9,7 +9,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,7 +16,6 @@ import java.util.stream.Collectors;
 public class MainVerticle extends AbstractVerticle {
 
   private HashMap<String, String> services = new HashMap<>();
-  //TODO use this
   private DBConnector connector;
   private BackgroundPoller poller = new BackgroundPoller();
 
@@ -27,7 +25,7 @@ public class MainVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
     populateServicesFromDB(connector, services);
-    vertx.setPeriodic(1000 * 1, timerId -> poller.pollServices(vertx, services));
+    vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(vertx, services));
     setRoutes(router);
     vertx
         .createHttpServer()
@@ -77,6 +75,7 @@ public class MainVerticle extends AbstractVerticle {
           .end("OK");
     });
 
+    // API for deleting a service
     router.delete("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
       String url = jsonBody.getString("url");
@@ -84,6 +83,7 @@ public class MainVerticle extends AbstractVerticle {
         services.remove(url);
         req.response()
                 .putHeader("content-type", "text/plain")
+                .setStatusCode(204)
                 .end("OK");
       }
       else {
@@ -96,22 +96,15 @@ public class MainVerticle extends AbstractVerticle {
 
   private DBConnector setupDB() {
     connector = new DBConnector(vertx);
-    connector.query("DROP TABLE Services;");
+    //connector.query("DROP TABLE Services;");
     Future<ResultSet> result = connector.query("CREATE TABLE IF NOT EXISTS Services (Name VARCHAR(255), URL VARCHAR(255), Inserted DATETIME DEFAULT CURRENT_TIMESTAMP, Status CHAR(10) DEFAULT 'UNKNOWN');");
     result.setHandler(asyncResult -> {
       if (asyncResult.failed()) {
-        System.out.println("DB fail");
         System.out.println(asyncResult.cause());
       }
     });
-    result = connector.query("INSERT INTO Services (Name, URL) VALUES ('kry', 'https://www.kry.se');");
-    result.setHandler(asyncResult -> {
-      if (asyncResult.failed()) {
-        System.out.println("DB fail");
-        System.out.println(asyncResult.cause());
-      }
-    });
-    connector.query("INSERT INTO Services (Name, URL) VALUES ('non existing', 'http://a.non.existing.url');");
+    //connector.query("INSERT INTO Services (Name, URL) VALUES ('kry', 'https://www.kry.se');");
+    //connector.query("INSERT INTO Services (Name, URL) VALUES ('non existing', 'http://a.non.existing.url');");
 
     return connector;
   }
