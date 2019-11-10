@@ -25,7 +25,7 @@ public class MainVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
     populateServicesFromDB(connector, services);
-    vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(vertx, services));
+    vertx.setPeriodic(1000 * 5, timerId -> poller.pollServices(vertx, services));
     setRoutes(router);
     vertx
         .createHttpServer()
@@ -59,7 +59,7 @@ public class MainVerticle extends AbstractVerticle {
           .stream()
           .map(service ->
               new JsonObject()
-                  .put("url", service.getKey())
+                  .put("name", service.getKey())
                   .put("status", service.getValue()))
           .collect(Collectors.toList());
       req.response()

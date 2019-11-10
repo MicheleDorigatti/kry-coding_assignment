@@ -19,6 +19,7 @@ public class BackgroundPoller {
         url = new URL(service);
       } catch (MalformedURLException e) {
         e.printStackTrace();
+        continue;
       }
       String host = url.getHost();
       int port = url.getDefaultPort();
