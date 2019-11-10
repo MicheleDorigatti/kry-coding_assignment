@@ -24,8 +24,9 @@ public class MainVerticle extends AbstractVerticle {
     connector = new DBConnector(vertx);
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
-    services.put("https://www.kry.se", "UNKNOWN");
-    vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(services));
+    services.put("kry.se", "UNKNOWN");
+    services.put("a.non.existing.url", "UNKNOWN");
+    vertx.setPeriodic(1000 * 5, timerId -> poller.pollServices(vertx, services));
     setRoutes(router);
     vertx
         .createHttpServer()
