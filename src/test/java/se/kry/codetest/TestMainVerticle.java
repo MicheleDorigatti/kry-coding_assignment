@@ -69,7 +69,7 @@ public class TestMainVerticle {
                     testContext.completeNow();
                 }));
 
-        // An missing service
+        // A missing service
         json =  new JsonObject()
                 .put("url", "http://another.non.existing.service");
 

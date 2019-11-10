@@ -47,7 +47,12 @@ public class MainVerticle extends AbstractVerticle {
 
   private void addService(String name, String url) {
     services.put(url, "UNKNOWN");
-    connector.query("INSERT INTO Services (Name, URL) VALUES (" + name + ", " + url +  ");");
+    Future<ResultSet> result = connector.query("INSERT INTO Services (Name, URL) VALUES ('" + name + "', '" + url +  "');");
+    result.setHandler(asyncResult -> {
+      if (asyncResult.failed()) {
+        System.out.println(asyncResult.cause());
+      }
+    });
   }
 
   private void setRoutes(Router router){
@@ -67,6 +72,7 @@ public class MainVerticle extends AbstractVerticle {
           .end(new JsonArray(jsonServices).encode());
     });
 
+    // API for adding a service
     router.post("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
       addService(jsonBody.getString("name"), jsonBody.getString("url"));
@@ -96,15 +102,15 @@ public class MainVerticle extends AbstractVerticle {
 
   private DBConnector setupDB() {
     connector = new DBConnector(vertx);
-    //connector.query("DROP TABLE Services;");
+    connector.query("DROP TABLE Services;");
     Future<ResultSet> result = connector.query("CREATE TABLE IF NOT EXISTS Services (Name VARCHAR(255), URL VARCHAR(255), Inserted DATETIME DEFAULT CURRENT_TIMESTAMP, Status CHAR(10) DEFAULT 'UNKNOWN');");
     result.setHandler(asyncResult -> {
       if (asyncResult.failed()) {
         System.out.println(asyncResult.cause());
       }
     });
-    //connector.query("INSERT INTO Services (Name, URL) VALUES ('kry', 'https://www.kry.se');");
-    //connector.query("INSERT INTO Services (Name, URL) VALUES ('non existing', 'http://a.non.existing.url');");
+    connector.query("INSERT INTO Services (Name, URL) VALUES ('kry', 'https://www.kry.se');");
+    connector.query("INSERT INTO Services (Name, URL) VALUES ('non existing', 'http://a.non.existing.url');");
 
     return connector;
   }
@@ -120,10 +126,8 @@ public class MainVerticle extends AbstractVerticle {
           services.put(row.getString("URL"), row.getString("Status"));
         }
 
-        System.out.println("DB succ");
         System.out.println(asyncResult.result());
       } else if (asyncResult.failed()) {
-        System.out.println("DB fail");
         System.out.println(asyncResult.cause());
       }
     });

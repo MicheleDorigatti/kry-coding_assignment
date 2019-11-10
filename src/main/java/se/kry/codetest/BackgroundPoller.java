@@ -23,9 +23,10 @@ public class BackgroundPoller {
       }
       String host = url.getHost();
       int port = url.getDefaultPort();
+      boolean isSecureHttp = port == 443;
       client
               .get(port, host, "/")
-              .ssl(true)
+              .ssl(isSecureHttp)
               .send(asyncResult -> {
                 if (asyncResult.succeeded()) {
                   String status = asyncResult.result().statusMessage();
