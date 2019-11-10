@@ -47,6 +47,11 @@ public class MainVerticle extends AbstractVerticle {
     connector.query("DELETE FROM TABLE Services WHERE URL = '" +  url + "';");
   }
 
+  private void addService(String name, String url) {
+    services.put(url, "UNKNOWN");
+    connector.query("INSERT INTO Services (Name, URL) VALUES (" + name + ", " + url +  ");");
+  }
+
   private void setRoutes(Router router){
     router.route("/*").handler(StaticHandler.create());
 
@@ -66,7 +71,7 @@ public class MainVerticle extends AbstractVerticle {
 
     router.post("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
-      services.put(jsonBody.getString("url"), "UNKNOWN");
+      addService(jsonBody.getString("name"), jsonBody.getString("url"));
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");

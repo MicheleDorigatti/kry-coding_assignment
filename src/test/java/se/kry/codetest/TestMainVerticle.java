@@ -82,4 +82,29 @@ public class TestMainVerticle {
 
     }
 
+    @Test
+    @DisplayName("Add a service")
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
+    void add(Vertx vertx, VertxTestContext testContext) {
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // A new service
+        JsonObject json =  new JsonObject()
+                .put("name", "Facebook")
+                .put("url", "https://www.facebook.com");
+
+        WebClient.create(vertx)
+                .post(8080, "::1", "/service")
+                .sendJsonObject(json, response -> testContext.verify(() -> {
+                    assertEquals(200, response.result().statusCode());
+                    testContext.completeNow();
+                }));
+
+
+    }
+
 }
