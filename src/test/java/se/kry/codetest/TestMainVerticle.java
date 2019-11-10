@@ -27,16 +27,14 @@ public class TestMainVerticle {
   }
 
   @Test
-  @DisplayName("Start a web server on localhost responding to path /service on port 8080")
+  @DisplayName("Get the list of services")
   @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
-  void start_http_server(Vertx vertx, VertxTestContext testContext) {
+  void get(Vertx vertx, VertxTestContext testContext) {
       try {
           TimeUnit.SECONDS.sleep(2);
       } catch (InterruptedException e) {
           e.printStackTrace();
       }
-
-      //verticle.deleteService("https://www.kry.se");
 
       WebClient.create(vertx)
         .get(8080, "::1", "/service")
@@ -49,5 +47,39 @@ public class TestMainVerticle {
         }));
 
   }
+
+    @Test
+    @DisplayName("Delete a service")
+    @Timeout(value = 10, timeUnit = TimeUnit.SECONDS)
+    void delete(Vertx vertx, VertxTestContext testContext) {
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // An existing service
+        JsonObject json =  new JsonObject()
+                .put("url", "https://www.kry.se");
+
+        WebClient.create(vertx)
+                .delete(8080, "::1", "/service")
+                .sendJsonObject(json, response -> testContext.verify(() -> {
+                    assertEquals(200, response.result().statusCode());
+                    testContext.completeNow();
+                }));
+
+        // An missing service
+        json =  new JsonObject()
+                .put("url", "http://another.non.existing.service");
+
+        WebClient.create(vertx)
+                .delete(8080, "::1", "/service")
+                .sendJsonObject(json, response -> testContext.verify(() -> {
+                    assertEquals(404, response.result().statusCode());
+                    testContext.completeNow();
+                }));
+
+    }
 
 }

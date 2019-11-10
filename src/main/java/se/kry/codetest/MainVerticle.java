@@ -42,37 +42,50 @@ public class MainVerticle extends AbstractVerticle {
         });
   }
 
-  public void deleteService(String url)  {
-    if (! services.containsKey(url)) {
-      System.out.println("key not found");
-      return;
-    }
-
+  private void deleteService(String url)  {
     services.remove(url);
-    connector.query("DELETE FROM TABLE Services WHERE Name = '" +  url + "';");
+    connector.query("DELETE FROM TABLE Services WHERE URL = '" +  url + "';");
   }
 
   private void setRoutes(Router router){
     router.route("/*").handler(StaticHandler.create());
+
     router.get("/service").handler(req -> {
       List<JsonObject> jsonServices = services
           .entrySet()
           .stream()
           .map(service ->
               new JsonObject()
-                  .put("name", service.getKey())
+                  .put("url", service.getKey())
                   .put("status", service.getValue()))
           .collect(Collectors.toList());
       req.response()
           .putHeader("content-type", "application/json")
           .end(new JsonArray(jsonServices).encode());
     });
+
     router.post("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
       services.put(jsonBody.getString("url"), "UNKNOWN");
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");
+    });
+
+    router.delete("/service").handler(req -> {
+      JsonObject jsonBody = req.getBodyAsJson();
+      String url = jsonBody.getString("url");
+      if (services.containsKey(url)) {
+        services.remove(url);
+        req.response()
+                .putHeader("content-type", "text/plain")
+                .end("OK");
+      }
+      else {
+        req.response()
+                .setStatusCode(404)
+                .end();
+      }
     });
   }
 
