@@ -102,15 +102,15 @@ public class MainVerticle extends AbstractVerticle {
 
   private DBConnector setupDB() {
     connector = new DBConnector(vertx);
-    connector.query("DROP TABLE Services;");
+    //connector.query("DROP TABLE Services;");
     Future<ResultSet> result = connector.query("CREATE TABLE IF NOT EXISTS Services (Name VARCHAR(255), URL VARCHAR(255), Inserted DATETIME DEFAULT CURRENT_TIMESTAMP, Status CHAR(10) DEFAULT 'UNKNOWN');");
     result.setHandler(asyncResult -> {
       if (asyncResult.failed()) {
         System.out.println(asyncResult.cause());
       }
     });
-    connector.query("INSERT INTO Services (Name, URL) VALUES ('kry', 'https://www.kry.se');");
-    connector.query("INSERT INTO Services (Name, URL) VALUES ('non existing', 'http://a.non.existing.url');");
+    //connector.query("INSERT INTO Services (Name, URL) VALUES ('kry', 'https://www.kry.se');");
+    //connector.query("INSERT INTO Services (Name, URL) VALUES ('non existing', 'http://a.non.existing.url');");
 
     return connector;
   }
@@ -121,12 +121,8 @@ public class MainVerticle extends AbstractVerticle {
     result.setHandler(asyncResult -> {
       if (asyncResult.succeeded()) {
         for (JsonObject row : asyncResult.result().getRows()) {
-          System.out.println(row.getString(row.encodePrettily()));
-
           services.put(row.getString("URL"), row.getString("Status"));
         }
-
-        System.out.println(asyncResult.result());
       } else if (asyncResult.failed()) {
         System.out.println(asyncResult.cause());
       }
