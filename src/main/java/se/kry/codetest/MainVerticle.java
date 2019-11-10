@@ -4,6 +4,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
@@ -21,11 +22,10 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Future<Void> startFuture) {
-    connector = new DBConnector(vertx);
+    DBConnector connector = setupDB();
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
-    services.put("https://www.kry.se", "UNKNOWN");
-    services.put("http://a.non.existing.url", "UNKNOWN");
+    populateServicesFromDB(connector, services);
     vertx.setPeriodic(1000 * 1, timerId -> poller.pollServices(vertx, services));
     setRoutes(router);
     vertx
@@ -62,6 +62,33 @@ public class MainVerticle extends AbstractVerticle {
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");
+    });
+  }
+
+  private DBConnector setupDB() {
+    connector = new DBConnector(vertx);
+    connector.query("CREATE TABLE IF NOT EXISTS Services (Name VARCHAR(255), Status CHAR(10));");
+    connector.query("REPLACE INTO Services VALUES ('https://www.kry.se', 'UNKNOWN');");
+    connector.query("REPLACE INTO Services VALUES ('http://a.non.existing.url', 'UNKNOWN');");
+
+    return connector;
+  }
+
+  private void populateServicesFromDB(DBConnector connector, HashMap<String, String> services) {
+    Future<ResultSet> result = connector.query("SELECT * FROM Services;");
+
+    result.setHandler(asyncResult -> {
+      if (asyncResult.succeeded()) {
+        for (JsonObject row : asyncResult.result().getRows()) {
+          services.put(row.getString("Name"), row.getString("Status"));
+        }
+
+        System.out.println("DB succ");
+        System.out.println(asyncResult.result());
+      } else if (asyncResult.failed()) {
+        System.out.println("DB fail");
+        System.out.println(asyncResult.cause());
+      }
     });
   }
 
