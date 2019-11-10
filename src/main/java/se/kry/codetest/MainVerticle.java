@@ -9,6 +9,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,10 +78,22 @@ public class MainVerticle extends AbstractVerticle {
 
   private DBConnector setupDB() {
     connector = new DBConnector(vertx);
-    //connector.query("DROP TABLE Services;");
-    connector.query("CREATE TABLE IF NOT EXISTS Services (Name VARCHAR(255), Status CHAR(10));");
-    //connector.query("INSERT INTO Services VALUES ('https://www.kry.se', 'UNKNOWN');");
-    //connector.query("INSERT INTO Services VALUES ('http://a.non.existing.url', 'UNKNOWN');");
+    connector.query("DROP TABLE Services;");
+    Future<ResultSet> result = connector.query("CREATE TABLE IF NOT EXISTS Services (Name VARCHAR(255), URL VARCHAR(255), Inserted DATETIME DEFAULT CURRENT_TIMESTAMP, Status CHAR(10) DEFAULT 'UNKNOWN');");
+    result.setHandler(asyncResult -> {
+      if (asyncResult.failed()) {
+        System.out.println("DB fail");
+        System.out.println(asyncResult.cause());
+      }
+    });
+    result = connector.query("INSERT INTO Services (Name, URL) VALUES ('kry', 'https://www.kry.se');");
+    result.setHandler(asyncResult -> {
+      if (asyncResult.failed()) {
+        System.out.println("DB fail");
+        System.out.println(asyncResult.cause());
+      }
+    });
+    connector.query("INSERT INTO Services (Name, URL) VALUES ('non existing', 'http://a.non.existing.url');");
 
     return connector;
   }
@@ -91,9 +104,9 @@ public class MainVerticle extends AbstractVerticle {
     result.setHandler(asyncResult -> {
       if (asyncResult.succeeded()) {
         for (JsonObject row : asyncResult.result().getRows()) {
-          System.out.println(row.getString("Name"));
-          System.out.println(row.getString("Status"));
-          services.put(row.getString("Name"), row.getString("Status"));
+          System.out.println(row.getString(row.encodePrettily()));
+
+          services.put(row.getString("URL"), row.getString("Status"));
         }
 
         System.out.println("DB succ");
